@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { OctagonAlertIcon } from "lucide-react";
+import { FaGithub, FaGoogle } from "react-icons/fa";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ const formSchema = z.object({
 
 
 export const SignUpView = () => {
+
     const router = useRouter();
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,7 @@ export const SignUpView = () => {
                 name: data.name,
                 email: data.email,
                 password: data.password,
+                callbackURL: "/",
             },
             {
                 onSuccess: () => {
@@ -69,10 +72,30 @@ export const SignUpView = () => {
                 onError: ({ error }) => {
                     setError(error.message);
                     setPending(false);
-                }
+                },
             }
         );
-    }
+    };
+    const onSocial = (provider: "github" | "google") => {
+        setError(null);
+        setPending(true);
+
+        authClient.signIn.social(
+            {
+                provider: provider,
+                callbackURL: "/",
+            },
+            {
+                onSuccess: () => {
+                    setPending(false);
+                },
+                onError: ({ error }) => {
+                    setError(error.message);
+                    setPending(false);
+                },
+            }
+        );
+    };
 
     return (
         <div className="flex flex-col gap-6">
@@ -180,19 +203,21 @@ export const SignUpView = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <Button
                                         disabled={pending}
+                                        onClick={() => onSocial("google")}
                                         variant="outline"
                                         type="button"
                                         className="w-full"
                                     >
-                                        Google
+                                        <FaGoogle />
                                     </Button>
                                     <Button
+                                        onClick={() => onSocial("github")}
                                         disabled={pending}
                                         variant="outline"
                                         type="button"
                                         className="w-full"
                                     >
-                                        Github
+                                        <FaGithub />
                                     </Button>
                                 </div>
                                 <div className="text-center text-sm">
@@ -205,7 +230,7 @@ export const SignUpView = () => {
                         </form>
                     </Form>
 
-                    <div className="bg-radial from-green-700 to-green-900 relative hidden md:flex flex-col gap-y-4 items-center justify-center">
+                    <div className="bg-radial from-[#4FB7B3] to-[#0F766E] relative hidden md:flex flex-col gap-y-4 items-center justify-center">
                         <img src="/logo.svg" alt="Image" className="h-[92px] w-[92px]" />
                         <p className="text-2xl font-semibold text-white">
                             Meet.AI
