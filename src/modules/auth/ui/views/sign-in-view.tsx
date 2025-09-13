@@ -179,15 +179,14 @@ export const SignInView = () => {
                                 </div>
                                 <div className="text-center text-sm">
                                     Don&apos;t have an account?{" "}
-                                    <Link href="/auth/sign-up" className="underline underline-offset-4">
+                                    <Link href="/sign-up" className="underline underline-offset-4">
                                         Sign up
                                     </Link>
                                 </div>
                             </div>
                         </form>
                     </Form>
-
-                    <div className="bg-radial from-[#4FB7B3] to-[#0F766E] relative hidden md:flex flex-col gap-y-4 items-center justify-center">
+                    <div className="bg-radial from-sidebar-accent to-sidebar relative hidden md:flex flex-col gap-y-4 items-center justify-center">
                         <img src="/logo.svg" alt="Image" className="h-[92px] w-[92px]" />
                         <p className="text-2xl font-semibold text-white">
                             Meet.AI
