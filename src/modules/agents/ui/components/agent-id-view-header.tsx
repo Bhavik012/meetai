@@ -9,16 +9,13 @@ import {
     DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 
-
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
     BreadcrumbSeparator,
-
 } from "@/components/ui/breadcrumb";
-
 
 interface Props {
     agentId: string;
@@ -63,6 +60,13 @@ export const AgentIdViewHeader = ({
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+
+                    <DropdownMenuItem onClick={onEdit}>
+                        <PencilIcon className="size-4 text-black" />
+                        Edit
+                    </DropdownMenuItem>
+
+
                     <DropdownMenuItem onClick={onRemove}>
                         <TrashIcon className="size-4 text-black" />
                         Delete
