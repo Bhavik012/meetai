@@ -61,5 +61,5 @@ export const MeetingsViewError = () => {
             title="Error Loading Meetings"
             description="Something went wrong"
         />
-    )
-}
+    );
+};
