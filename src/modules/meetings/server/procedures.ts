@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { db } from "@/db";
-import { agents, meetings } from "@/db/schema";
+import { agents, meetings, transcriptions } from "@/db/schema";
 import { TRPCError } from "@trpc/server";
 
 import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
@@ -10,6 +10,8 @@ import { meetingsInsertSchema, meetingsUpdateSchema } from "../schemas";
 import { MeetingStatus } from "../types";
 import { streamVideo } from "@/lib/stream-video";
 import { generateAvatarUri } from "@/lib/avatar";
+import { AccessToken } from "livekit-server-sdk";
+import { geminiModel } from "@/lib/gemini";
 
 
 export const meetingsRouter = createTRPCRouter({
@@ -237,5 +239,92 @@ export const meetingsRouter = createTRPCRouter({
                 total: total.count,
                 totalPages,
             };
+        }),
+    addTranscription: protectedProcedure
+        .input(z.object({
+            meetingId: z.string(),
+            text: z.string(),
+            agentId: z.string().nullish(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+            const [newTranscription] = await db
+                .insert(transcriptions)
+                .values({
+                    meetingId: input.meetingId,
+                    text: input.text,
+                    userId: ctx.auth.user.id,
+                    agentId: input.agentId,
+                })
+                .returning();
+
+            return newTranscription;
+        }),
+    getTranscriptions: protectedProcedure
+        .input(z.object({ meetingId: z.string() }))
+        .query(async ({ input, ctx }) => {
+            return await db
+                .select()
+                .from(transcriptions)
+                .where(eq(transcriptions.meetingId, input.meetingId))
+                .orderBy(desc(transcriptions.timestamp));
+        }),
+    generateLiveKitToken: protectedProcedure
+        .input(z.object({
+            meetingId: z.string(),
+        }))
+        .mutation(async ({ input, ctx }) => {
+            const at = new AccessToken(
+                process.env.LIVEKIT_API_KEY!,
+                process.env.LIVEKIT_API_SECRET!,
+                {
+                    identity: ctx.auth.user.id,
+                    name: ctx.auth.user.name,
+                }
+            );
+
+            at.addGrant({
+                roomJoin: true,
+                room: input.meetingId,
+                canPublish: true,
+                canSubscribe: true,
+                canPublishData: true,
+            });
+
+            return await at.toJwt();
+        }),
+    generateSummary: protectedProcedure
+        .input(z.object({ meetingId: z.string() }))
+        .mutation(async ({ input, ctx }) => {
+            const meetingTranscripts = await db
+                .select()
+                .from(transcriptions)
+                .where(eq(transcriptions.meetingId, input.meetingId))
+                .orderBy(transcriptions.timestamp);
+
+            if (meetingTranscripts.length === 0) {
+                throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "No transcriptions found for this meeting."
+                });
+            }
+
+            const transcriptText = meetingTranscripts.map(t => t.text).join("\n");
+
+            const prompt = `Summarize the following meeting transcript in a professional and concise manner, highlighting key decisions and action items:\n\n${transcriptText}`;
+
+            const result = await geminiModel.generateContent(prompt);
+            const summary = result.response.text();
+
+            await db
+                .update(meetings)
+                .set({ summary, status: "completed" })
+                .where(
+                    and(
+                        eq(meetings.id, input.meetingId),
+                        eq(meetings.userId, ctx.auth.user.id),
+                    )
+                );
+
+            return { summary };
         }),
 });

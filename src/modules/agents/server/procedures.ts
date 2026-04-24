@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { db } from "@/db";
-import { agents } from "@/db/schema";
+import { agents, meetings } from "@/db/schema";
 import { TRPCError } from "@trpc/server";
 
 import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
@@ -65,16 +65,18 @@ export const agentsRouter = createTRPCRouter({
         .query(async ({ input, ctx }) => {
             const [existingAgent] = await db
                 .select({
-                    meetingCount: sql<number>`5`,
                     ...getTableColumns(agents),
+                    meetingCount: count(meetings.id),
                 })
                 .from(agents)
+                .leftJoin(meetings, eq(agents.id, meetings.agentsId))
                 .where(
                     and(
                         eq(agents.id, input.id),
                         eq(agents.userId, ctx.auth.user.id),
                     )
-                );
+                )
+                .groupBy(agents.id);
 
             if (!existingAgent) {
                 throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
@@ -102,16 +104,18 @@ export const agentsRouter = createTRPCRouter({
             const { search, page, pageSize } = input;
             const data = await db
                 .select({
-                    meetingCount: sql<number>`6`,
                     ...getTableColumns(agents),
+                    meetingCount: count(meetings.id),
                 })
                 .from(agents)
+                .leftJoin(meetings, eq(agents.id, meetings.agentsId))
                 .where(
                     and(
                         eq(agents.userId, ctx.auth.user.id),
                         search ? ilike(agents.name, `%${search}%`) : undefined,
                     )
                 )
+                .groupBy(agents.id)
                 .orderBy(desc(agents.createdAt), desc(agents.id))
                 .limit(pageSize)
                 .offset((page - 1) * pageSize)

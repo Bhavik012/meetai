@@ -56,6 +56,7 @@ export const agents = pgTable("agents", {
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
     instructions: text("instructions").notNull(),
+    voice: text("voice").notNull().default("ash"), // Default voice
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -76,16 +77,31 @@ export const meetings = pgTable("meetings", {
     userId: text("user_id")
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
-    agentsId: text("agent_id")
+    agentsId: text("agents_id")
         .notNull()
         .references(() => agents.id, { onDelete: "cascade" }),
     status: meetingStatus("status").notNull().default("upcoming"),
     startedAt: timestamp("started_at"),
     endedAt: timestamp("ended_at"),
     transcriptUrl: text("transcript_url"),
-    recodeingUrl: text("recording_url"),
+    recordingUrl: text("recording_url"),
     summary: text("summary"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const transcriptions = pgTable("transcriptions", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => nanoid()),
+    meetingId: text("meeting_id")
+        .notNull()
+        .references(() => meetings.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+        .references(() => user.id, { onDelete: "set null" }),
+    agentId: text("agent_id")
+        .references(() => agents.id, { onDelete: "set null" }),
+    text: text("text").notNull(),
+    timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
 

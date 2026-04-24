@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { HomeView } from "@/modules/home/ui/views/home-view"
 
-"home-view";
 
 
 const page = async () => {

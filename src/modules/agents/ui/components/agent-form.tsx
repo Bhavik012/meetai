@@ -11,6 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { GeneratedAvatar } from "@/components/generated-avatar";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import {
     Form,
@@ -79,6 +86,7 @@ export const AgentForm = ({
         defaultValues: {
             name: initialValues?.name ?? "",
             instructions: initialValues?.instructions ?? "",
+            voice: (initialValues as any)?.voice ?? "ash",
         },
     });
     const isEdit = !!initialValues?.id;
@@ -118,12 +126,36 @@ export const AgentForm = ({
                     control={form.control}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>instructions</FormLabel>
+                            <FormLabel>Instructions</FormLabel>
                             <FormControl>
                                 <Textarea
                                     {...field}
-                                    placeholder="You are a helpful math assistant that can answer question and help with assigments." />
+                                    placeholder="You are a helpful math assistant..." />
                             </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    name="voice"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Voice</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a voice" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="ash">Ash</SelectItem>
+                                    <SelectItem value="ballad">Ballad</SelectItem>
+                                    <SelectItem value="coral">Coral</SelectItem>
+                                    <SelectItem value="sage">Sage</SelectItem>
+                                    <SelectItem value="verse">Verse</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                         </FormItem>
                     )}
